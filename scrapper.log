@@ -52,3 +52,13 @@ INFO:werkzeug:172.18.0.2 - - [31/Mar/2023 16:42:15] "GET /static/css/main.css HT
 INFO:werkzeug:172.18.0.2 - - [31/Mar/2023 16:42:15] "GET /static/css/style.css HTTP/1.1" 200 -
 INFO:werkzeug:172.18.0.2 - - [31/Mar/2023 16:42:15] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
 INFO:werkzeug:172.18.0.2 - - [31/Mar/2023 16:42:28] "POST /review HTTP/1.1" 200 -
+2024-09-24 13:41:17,228 - INFO - App has been run with query: 
+2024-09-24 13:41:24,587 - INFO - App has been run with query: krish naik
+2024-09-24 13:42:27,756 - INFO - App has been run with query: krish naik
+2024-09-24 13:42:30,476 - INFO - App has been run with query: krish naik
+2024-09-24 13:42:48,485 - INFO - App has been run with query: krish naik
+2024-09-24 13:43:08,632 - INFO - App has been run with query: youtube
+2024-09-24 13:43:11,426 - INFO - App has been run with query: youtube
+2024-09-24 13:49:05,119 - INFO - App has been run with query: 
+2024-09-24 13:49:12,699 - INFO - App has been run with query: macbook
+2024-09-24 13:49:16,264 - INFO - App has been run with query: macbook

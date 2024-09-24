@@ -1,77 +1,60 @@
-from flask import Flask, render_template, request,jsonify
-from flask_cors import CORS,cross_origin
+import streamlit as st
 import requests
-from bs4 import BeautifulSoup
-from urllib.request import urlopen as uReq
 import logging
-import pymongo
-logging.basicConfig(filename="scrapper.log" , level=logging.INFO)
-import os
 
-app = Flask(__name__)
+# Configure logging
+logging.basicConfig(filename='scrapper.log', level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
-@app.route("/", methods = ['GET'])
-def homepage():
-    return render_template("index.html")
+# Function to fetch images from Google using SerpAPI
+def fetch_images(query, api_key):
+    try:
+        params = {
+            "engine": "google",
+            "q": query,
+            "tbm": "isch",
+            "api_key": api_key,
+        }
+        response = requests.get("https://serpapi.com/search", params=params)
+        
+        if response.status_code == 200:
+            results = response.json()
+            return [img['link'] for img in results.get('images_results', [])[:10]]
+        else:
+            logging.error(f"Error fetching images: {response.status_code} - {response.text}")
+            st.error("Error fetching images. Please check your API key and try again.")
+            return []
+    except Exception as e:
+        logging.exception("Exception occurred while fetching images")
+        st.error("An unexpected error occurred. Please try again later.")
+        return []
 
-@app.route("/review" , methods = ['POST' , 'GET'])
-def index():
-    if request.method == 'POST':
-                try:
+# Streamlit App
+st.title("Image Scraper")
 
-                    # query to search for images
-                    query = request.form['content'].replace(" ","")
+# User input for image search
+query = st.text_input("What kind of images do you want to scrape?", "")
 
-                            # directory to store downloaded images
-                    save_directory = "images/"
+# Your SerpAPI Key (Make sure to keep this secure)
+api_key = st.secrets['general']["serpapi_api_key"]  # Store your API key in Streamlit secrets
 
-                            # create the directory if it doesn't exist
-                    if not os.path.exists(save_directory):
-                        os.makedirs(save_directory)
-
-
-
-                            # fake user agent to avoid getting blocked by Google
-                    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"}
-
-                            # fetch the search results page
-                    response = requests.get(f"https://www.google.com/search?q={query}&sxsrf=AJOqlzUuff1RXi2mm8I_OqOwT9VjfIDL7w:1676996143273&source=lnms&tbm=isch&sa=X&ved=2ahUKEwiq-qK7gaf9AhXUgVYBHYReAfYQ_AUoA3oECAEQBQ&biw=1920&bih=937&dpr=1#imgrc=1th7VhSesfMJ4M")
-
-
-                            # parse the HTML using BeautifulSoup
-                    soup = BeautifulSoup(response.content, "html.parser")
-
-                            # find all img tags
-                    image_tags = soup.find_all("img")
-
-                            # download each image and save it to the specified directory
-                    del image_tags[0]
-                    img_data=[]
-                    for index,image_tag in enumerate(image_tags):
-                                # get the image source URL
-                                image_url = image_tag['src']
-                                #print(image_url)
-                                
-                                # send a request to the image URL and save the image
-                                image_data = requests.get(image_url).content
-                                mydict={"Index":index,"Image":image_data}
-                                img_data.append(mydict)
-                                with open(os.path.join(save_directory, f"{query}_{image_tags.index(image_tag)}.jpg"), "wb") as f:
-                                    f.write(image_data)
-                    client = pymongo.MongoClient("mongodb+srv://webber:1593578624@web-scrap.byorfwd.mongodb.net/?retryWrites=true&w=majority")
-                    db = client['image_scrap']
-                    review_col = db['image_scrap_data']
-                    review_col.insert_many(img_data)          
-
-                    return "image laoded"
-                except Exception as e:
-                    logging.info(e)
-                    return 'something is wrong'
-            # return render_template('results.html')
-
+if st.button("Search"):
+    if query:
+        with st.spinner("Fetching images..."):
+            images = fetch_images(query, api_key)
+            if images:
+                for index, img_url in enumerate(images):
+                    st.image(img_url, use_column_width=True)
+                    st.download_button(
+                        "Download Image", 
+                        img_url, 
+                        "image.jpg", 
+                        key=f"download_{index}"  # Unique key for each button
+                    )
+            else:
+                st.error("No images found.")
     else:
-        return render_template('index.html')
+        st.warning("Please enter a search term.")
 
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8000)
+# Log information when the app is run
+logging.info("App has been run with query: %s", query)
